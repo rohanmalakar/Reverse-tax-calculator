@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inclusive Tax Calculator</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f5f5f3;
+      --color-bg-success: #eaf3de;
+      --color-text-primary: #1a1a18;
+      --color-text-secondary: #5f5e5a;
+      --color-text-tertiary: #888780;
+      --color-text-success: #3b6d11;
+      --color-border-primary: rgba(0,0,0,0.4);
+      --color-border-secondary: rgba(0,0,0,0.3);
+      --color-border-tertiary: rgba(0,0,0,0.15);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font-sans: 'DM Sans', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Mono', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #1e1e1c;
+        --color-bg-secondary: #2a2a28;
+        --color-bg-success: #173404;
+        --color-text-primary: #f0ede6;
+        --color-text-secondary: #a8a69e;
+        --color-text-tertiary: #6e6c66;
+        --color-text-success: #c0dd97;
+        --color-border-primary: rgba(255,255,255,0.4);
+        --color-border-secondary: rgba(255,255,255,0.3);
+        --color-border-tertiary: rgba(255,255,255,0.15);
+      }
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .wrap { width: 100%; max-width: 520px; }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--color-text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 2rem;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 1.25rem;
+    }
+
+    .currency-badge {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      padding: 0 4px;
+    }
+
+    .main-input {
+      font-size: 22px;
+      font-weight: 500;
+      width: 100%;
+      padding: 10px 14px;
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--radius-md);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      outline: none;
+      transition: border 0.15s;
+    }
+
+    .main-input:focus {
+      border-color: var(--color-border-primary);
+      box-shadow: 0 0 0 3px rgba(120,120,255,0.07);
+    }
+
+    .rate-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .rate-card {
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+    }
+
+    .rate-card.discount-card {
+      background: var(--color-bg-success);
+    }
+
+    .rate-card-label {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .rate-card.discount-card .rate-card-label {
+      color: var(--color-text-success);
+    }
+
+    .rate-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rate-number-input {
+      width: 64px;
+      font-size: 14px;
+      padding: 4px 8px;
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: var(--radius-md);
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      outline: none;
+      text-align: center;
+    }
+
+    .rate-number-input:focus { border-color: var(--color-border-primary); }
+
+    .pct { font-size: 13px; color: var(--color-text-secondary); }
+
+    input[type="range"] {
+      width: 100%;
+      margin-top: 10px;
+      accent-color: #639922;
+    }
+
+    .discount-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+    }
+
+    .toggle-wrap {
+      display: flex;
+      background: var(--color-bg-secondary);
+      border-radius: 20px;
+      padding: 2px;
+      gap: 2px;
+      border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .toggle-btn {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: var(--color-text-secondary);
+      transition: all 0.15s;
+      font-family: var(--font-sans);
+    }
+
+    .toggle-btn.active {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-weight: 500;
+      border: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+    }
+
+    .card.highlight {
+      background: var(--color-bg);
+      border: 0.5px solid var(--color-border-secondary);
+    }
+
+    .card.savings {
+      background: var(--color-bg-success);
+    }
+
+    .card-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .card.savings .card-label { color: var(--color-text-success); }
+    .card-value { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+    .card.savings .card-value { color: var(--color-text-success); }
+    .card-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 3px; }
+
+    .divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1rem 0; }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+    }
+
+    .breakdown-row:last-child { border-bottom: none; }
+
+    .breakdown-label { font-size: 14px; color: var(--color-text-secondary); }
+    .breakdown-label span { font-size: 11px; color: var(--color-text-tertiary); display: block; }
+    .breakdown-value { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+    .breakdown-value.accent { color: #E24B4A; }
+    .breakdown-value.green { color: var(--color-text-success); }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0 0;
+    }
+
+    .total-label { font-size: 15px; font-weight: 500; }
+    .total-value { font-size: 18px; font-weight: 500; }
+
+    .formula-box {
+      margin-top: 1.25rem;
+      background: var(--color-bg-secondary);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+    }
+
+    .formula-title {
+      font-size: 11px;
+      color: var(--color-text-tertiary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .formula-text {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      line-height: 1.8;
+      font-family: var(--font-mono);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem 0;
+      color: var(--color-text-tertiary);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Inclusive Tax Calculator</h1>
+  <p class="subtitle">Reverse-calculates base price from total inclusive amount</p>
+
+  <p class="section-label">Total amount (inclusive)</p>
+  <div class="input-row">
+    <span class="currency-badge">₹</span>
+    <input type="number" id="amount-input" class="main-input" placeholder="Enter total amount" min="0" step="0.01" />
+  </div>
+
+  <p class="section-label">Tax rates &amp; discount</p>
+  <div class="rate-grid">
+    <div class="rate-card">
+      <p class="rate-card-label">Mint Sheela</p>
+      <div class="rate-input-wrap">
+        <input type="number" id="ms-input" class="rate-number-input" value="100" min="0" max="1000" step="0.1" />
+        <span class="pct">%</span>
+      </div>
+      <input type="range" id="ms-slider" min="0" max="200" step="0.5" value="100" />
+    </div>
+    <div class="rate-card">
+      <p class="rate-card-label">VAT</p>
+      <div class="rate-input-wrap">
+        <input type="number" id="vat-input" class="rate-number-input" value="15" min="0" max="100" step="0.1" />
+        <span class="pct">%</span>
+      </div>
+      <input type="range" id="vat-slider" min="0" max="50" step="0.5" value="15" />
+    </div>
+    <div class="rate-card discount-card">
+      <p class="rate-card-label">Discount</p>
+      <div class="rate-input-wrap">
+        <input type="number" id="disc-input" class="rate-number-input" value="0" min="0" max="100" step="0.1" />
+        <span class="pct" id="disc-unit">%</span>
+      </div>
+      <input type="range" id="disc-slider" min="0" max="50" step="0.5" value="0" />
+    </div>
+  </div>
+
+  <div class="discount-toggle">
+    <span class="toggle-label">Discount on:</span>
+    <div class="toggle-wrap">
+      <button class="toggle-btn active" id="btn-pct" onclick="setDiscMode('pct')">% of total</button>
+      <button class="toggle-btn" id="btn-flat" onclick="setDiscMode('flat')">Flat ₹</button>
+    </div>
+  </div>
+
+  <div id="result-area"><p class="empty-state">Enter an amount above to see the breakdown</p></div>
+</div>
+
+<script>
+  const amountEl = document.getElementById('amount-input');
+  const msInput = document.getElementById('ms-input');
+  const msSlider = document.getElementById('ms-slider');
+  const vatInput = document.getElementById('vat-input');
+  const vatSlider = document.getElementById('vat-slider');
+  const discInput = document.getElementById('disc-input');
+  const discSlider = document.getElementById('disc-slider');
+  const discUnit = document.getElementById('disc-unit');
+  const area = document.getElementById('result-area');
+  let discMode = 'pct';
+
+  function setDiscMode(mode) {
+    discMode = mode;
+    document.getElementById('btn-pct').className = 'toggle-btn' + (mode === 'pct' ? ' active' : '');
+    document.getElementById('btn-flat').className = 'toggle-btn' + (mode === 'flat' ? ' active' : '');
+    discUnit.textContent = mode === 'pct' ? '%' : '₹';
+    if (mode === 'flat') {
+      discSlider.max = Math.max(parseFloat(amountEl.value) || 1000, 1000);
+      discSlider.step = 1;
+    } else {
+      discSlider.max = 50;
+      discSlider.step = 0.5;
+    }
+    discInput.value = 0;
+    discSlider.value = 0;
+    render();
+  }
+
+  function fmt(n) {
+    return '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function calc(total, msRate, vatRate, discVal, discMode) {
+    if (!total || total <= 0) return null;
+    let discAmt = discMode === 'pct' ? total * (discVal / 100) : Math.min(discVal, total);
+    const afterDiscount = total - discAmt;
+    const ms = msRate / 100;
+    const vat = vatRate / 100;
+    const divisor = (1 + ms) * (1 + vat);
+    const base = afterDiscount / divisor;
+    const mintSheela = base * ms;
+    const inclusivePrice = base + mintSheela;
+    const vatAmt = inclusivePrice * vat;
+    return { total, discAmt, afterDiscount, base, mintSheela, inclusivePrice, vatAmt, msRate, vatRate, discVal, discMode };
+  }
+
+  function render() {
+    const total = parseFloat(amountEl.value);
+    const msRate = parseFloat(msInput.value) || 0;
+    const vatRate = parseFloat(vatInput.value) || 0;
+    const discVal = parseFloat(discInput.value) || 0;
+    const r = calc(total, msRate, vatRate, discVal, discMode);
+    if (!r) {
+      area.innerHTML = '<p class="empty-state">Enter an amount above to see the breakdown</p>';
+      return;
+    }
+
+    const discLabel = discMode === 'pct' ? `${r.discVal}% of total` : `Flat amount`;
+    const hasDiscount = r.discAmt > 0;
+
+    area.innerHTML = `
+      <div class="cards">
+        <div class="card highlight">
+          <p class="card-label">Base price</p>
+          <p class="card-value">${fmt(r.base)}</p>
+          <p class="card-sub">Before any tax</p>
+        </div>
+        ${hasDiscount ? `<div class="card savings">
+          <p class="card-label">You save</p>
+          <p class="card-value">− ${fmt(r.discAmt)}</p>
+          <p class="card-sub">${discLabel}</p>
+        </div>` : `<div class="card">
+          <p class="card-label">Inclusive price</p>
+          <p class="card-value">${fmt(r.inclusivePrice)}</p>
+          <p class="card-sub">Base + Mint Sheela</p>
+        </div>`}
+      </div>
+      <div style="margin-top:1.25rem;">
+        <p class="section-label">Full breakdown</p>
+        <div class="breakdown-row">
+          <div class="breakdown-label">Original total<span>Amount entered</span></div>
+          <div class="breakdown-value">${fmt(r.total)}</div>
+        </div>
+        ${hasDiscount ? `<div class="breakdown-row">
+          <div class="breakdown-label">Discount<span>${discLabel}</span></div>
+          <div class="breakdown-value green">− ${fmt(r.discAmt)}</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">After discount<span>Amount to be split</span></div>
+          <div class="breakdown-value">${fmt(r.afterDiscount)}</div>
+        </div>` : ''}
+        <div class="breakdown-row">
+          <div class="breakdown-label">Base price<span>Reverse-calculated</span></div>
+          <div class="breakdown-value">${fmt(r.base)}</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">Mint Sheela<span>${r.msRate}% on base price</span></div>
+          <div class="breakdown-value accent">+ ${fmt(r.mintSheela)}</div>
+        </div>
+        <div class="breakdown-row">
+          <div class="breakdown-label">VAT<span>${r.vatRate}% on inclusive price (${fmt(r.inclusivePrice)})</span></div>
+          <div class="breakdown-value accent">+ ${fmt(r.vatAmt)}</div>
+        </div>
+        <hr class="divider" />
+        <div class="total-row">
+          <span class="total-label">Amount payable</span>
+          <span class="total-value">${fmt(r.afterDiscount)}</span>
+        </div>
+      </div>
+      <div class="formula-box">
+        <p class="formula-title">Formula used</p>
+        <p class="formula-text">
+          ${hasDiscount ? `Discount = ${discMode === 'pct' ? `Total × ${r.discVal}%` : `₹${r.discVal} flat`}<br>After Discount = Total − Discount<br>` : ''}Base = ${hasDiscount ? 'After Discount' : 'Total'} ÷ ((1 + ${r.msRate / 100}) × (1 + ${r.vatRate / 100}))<br>
+          Mint Sheela = Base × ${r.msRate}%<br>
+          Inclusive Price = Base + Mint Sheela<br>
+          VAT = Inclusive Price × ${r.vatRate}%
+        </p>
+      </div>
+    `;
+  }
+
+  msInput.addEventListener('input', () => { msSlider.value = Math.min(msInput.value, 200); render(); });
+  msSlider.addEventListener('input', () => { msInput.value = msSlider.value; render(); });
+  vatInput.addEventListener('input', () => { vatSlider.value = Math.min(vatInput.value, 50); render(); });
+  vatSlider.addEventListener('input', () => { vatInput.value = vatSlider.value; render(); });
+  discInput.addEventListener('input', () => { discSlider.value = discMode === 'pct' ? Math.min(discInput.value, 50) : discInput.value; render(); });
+  discSlider.addEventListener('input', () => { discInput.value = discSlider.value; render(); });
+  amountEl.addEventListener('input', render);
+</script>
+</body>
+</html>
